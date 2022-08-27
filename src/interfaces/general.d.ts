@@ -21,9 +21,9 @@ export type Proposal = {
     votesFor: BigNumber;
     votesAgainst: BigNumber;
     status: number;
-    startBlock: number;
-    endBlock: number;
-    blockExecuted: number;
+    startBlock: BigNumber;
+    endBlock: BigNumber;
+    blockExecuted: BigNumber;
 };
 
 export type Vote = {

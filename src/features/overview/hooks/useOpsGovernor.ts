@@ -78,8 +78,6 @@ const useOpsGovernor = (): UseOpsGovernorReturn => {
                 paginateAndLoadAll(opsGovernorContract.getRegisteredUtils, numUtils)
             ]);
 
-            console.log('tokens', tokens);
-
             setManagers(managers);
             setOperators(operators);
             setTokens(tokens);

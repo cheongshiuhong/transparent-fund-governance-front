@@ -11,7 +11,7 @@ import { useWeb3Context } from '@contexts/web3';
 // Code
 import addresses from '@constants/addresses';
 import contracts from '@constants/contracts';
-import { getStartBlock, getBlockExecuted } from '../../utils';
+// import { getStartBlock, getBlockExecuted } from '../../utils';
 
 type UseListActiveProposalsReturn = {
     activeProposals: Proposal[];
@@ -41,15 +41,11 @@ const useListActiveProposals = (): UseListActiveProposalsReturn => {
                 .attach(opsGovernorAddress);
             const activeProposalsIdsResponse: BigNumber[] =
                 await opsGovernorContract.getActiveProposalsIds();
+
             const activeProposalsResponse = await Promise.all(
                 activeProposalsIdsResponse.map(async (id) => {
-                    const [activeProposalResponse, startBlock, blockExecuted] = await Promise.all([
-                        opsGovernorContract.getProposal(id),
-                        getStartBlock(opsGovernorContract, id),
-                        getBlockExecuted(opsGovernorContract, id)
-                    ]);
-                    const endBlock = activeProposalResponse.deadline.toNumber();
-                    return { id, ...activeProposalResponse, startBlock, endBlock, blockExecuted };
+                    const activeProposalResponse = await opsGovernorContract.getProposal(id);
+                    return { id, ...activeProposalResponse };
                 })
             );
             setActiveProposals(activeProposalsResponse.reverse());
@@ -60,27 +56,12 @@ const useListActiveProposals = (): UseListActiveProposalsReturn => {
                 async (id: BigNumber) => {
                     const newProposalResponse = await opsGovernorContract.getProposal(id);
 
-                    const endBlock = newProposalResponse.deadline.toNumber();
-                    const [startBlock, blockExecuted] = await Promise.all([
-                        getStartBlock(opsGovernorContract, id),
-                        getBlockExecuted(opsGovernorContract, id)
-                    ]);
-
                     setActiveProposals((activeProposals) =>
                         // Only set if new proposal is pending and not already shown
                         newProposalResponse.status !== 0 ||
                         activeProposals.some((proposal) => proposal.id.eq(id))
                             ? activeProposals
-                            : [
-                                  {
-                                      id,
-                                      ...newProposalResponse,
-                                      startBlock,
-                                      endBlock,
-                                      blockExecuted
-                                  },
-                                  ...activeProposals
-                              ]
+                            : [{ id, ...newProposalResponse }, ...activeProposals]
                     );
                 }
             );

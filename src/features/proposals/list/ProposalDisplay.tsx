@@ -34,7 +34,7 @@ const ProposalDisplay: FC<ProposalDisplayProps> = ({
             </p>
             <p className="text-xs sm:text-sm md:text-base">
                 <span className="font-semibold">Deadline Block</span>:&nbsp;
-                {proposal.endBlock.toString()}
+                {proposal.startBlock.toString()}
                 &nbsp;-&nbsp;{proposal.endBlock.toString()}
             </p>
             <p className="text-xs sm:text-sm md:text-base">

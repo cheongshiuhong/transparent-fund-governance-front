@@ -12,7 +12,6 @@ import { useWeb3Context } from '@contexts/web3';
 // Code
 import addresses from '@constants/addresses';
 import contracts from '@constants/contracts';
-import { getStartBlock, getBlockExecuted } from '../../utils';
 
 type UseProposalReturn = {
     isLoading: boolean;
@@ -65,95 +64,87 @@ const useProposal = (id: string): UseProposalReturn => {
             try {
                 // Retrieve the proposal
                 const proposalResponse = await opsGovernorContract.getProposal(id);
-                const [startBlock, blockExecuted] = await Promise.all([
-                    getStartBlock(opsGovernorContract, BigNumber.from(id)),
-                    getBlockExecuted(opsGovernorContract, BigNumber.from(id))
-                ]);
-                const endBlock = proposalResponse.deadline.toNumber();
-                const proposal: Proposal = {
-                    id,
-                    ...proposalResponse,
-                    startBlock,
-                    endBlock,
-                    blockExecuted
-                };
+                const proposal: Proposal = { id, ...proposalResponse };
                 setProposal(proposal);
 
                 // Get the votes for the proposal (batch by 5000 blocks)
-                const voteFilter = opsGovernorContract.filters.Vote(id);
-                const numBatches =
-                    Math.floor((endBlock - startBlock) / 5000) +
-                    ((endBlock - startBlock) % 5000 === 0 ? 0 : 1);
-                const votesResponse: Event[] = await Array(numBatches)
-                    .fill(1)
-                    .reduce(
-                        async (current, _, index) => [
-                            ...(await current),
-                            ...(await opsGovernorContract.queryFilter(
-                                voteFilter,
-                                startBlock + index * 5000,
-                                startBlock + (index + 1) * 5000
-                            ))
-                        ],
-                        Promise.resolve([]) as Promise<Event[]>
-                    );
-                const parsedVotes: Vote[] = [];
-                votesResponse.forEach((voteResponse) => {
-                    parsedVotes.push({
-                        voter: voteResponse.args?.voter as string,
-                        direction: voteResponse.args?.direction as number
-                    });
-                });
-                setVotes(parsedVotes);
+                // const voteFilter = opsGovernorContract.filters.Vote(id);
+                // const numBatches =
+                //     Math.floor(proposal.endBlock.sub(proposal.startBlock).toNumber() / 5000) +
+                //     (proposal.endBlock.sub(proposal.startBlock).toNumber() % 5000 === 0 ? 0 : 1);
+                // const votesResponse: Event[] = await Array(numBatches)
+                //     .fill(1)
+                //     .reduce(
+                //         async (current, _, index) => [
+                //             ...(await current),
+                //             ...(await opsGovernorContract.queryFilter(
+                //                 voteFilter,
+                //                 proposal.startBlock.add(index).mul(5000).toNumber(),
+                //                 proposal.startBlock
+                //                     .add(index + 1)
+                //                     .mul(5000)
+                //                     .toNumber()
+                //             ))
+                //         ],
+                //         Promise.resolve([]) as Promise<Event[]>
+                //     );
+                // const parsedVotes: Vote[] = [];
+                // votesResponse.forEach((voteResponse) => {
+                //     parsedVotes.push({
+                //         voter: voteResponse.args?.voter as string,
+                //         direction: voteResponse.args?.direction as number
+                //     });
+                // });
+                // setVotes(parsedVotes);
 
-                // Subscribe to votes
-                opsGovernorContract.on(
-                    voteFilter,
-                    async (
-                        _,
-                        voter: string,
-                        direction: number,
-                        votingPower: BigNumber,
-                        reason: string
-                    ) => {
-                        // Update the votes
-                        setVotes((votes) =>
-                            votes.some((vote) => vote.voter === voter)
-                                ? votes
-                                : [...votes, { voter, direction, votingPower, reason }]
-                        );
+                // // Subscribe to votes
+                // opsGovernorContract.on(
+                //     voteFilter,
+                //     async (
+                //         _,
+                //         voter: string,
+                //         direction: number,
+                //         votingPower: BigNumber,
+                //         reason: string
+                //     ) => {
+                //         // Update the votes
+                //         setVotes((votes) =>
+                //             votes.some((vote) => vote.voter === voter)
+                //                 ? votes
+                //                 : [...votes, { voter, direction, votingPower, reason }]
+                //         );
 
-                        // Check if executable
-                        const isExecutableResponse =
-                            await opsGovernorContract.getIsProposalExecutable(id);
-                        setIsExecutable(isExecutableResponse);
-                    }
-                );
+                //         // Check if executable
+                //         const isExecutableResponse =
+                //             await opsGovernorContract.getIsProposalExecutable(id);
+                //         setIsExecutable(isExecutableResponse);
+                //     }
+                // );
 
-                // Subscribe to executions
-                opsGovernorContract.on(
-                    opsGovernorContract.filters.ProposalExecuted(id),
-                    async (_eventArgs, eventDetails) => {
-                        setProposal({
-                            id,
-                            ...(await opsGovernorContract.getProposal(id)),
-                            startBlock: proposal.startBlock,
-                            endBlock: proposal.endBlock,
-                            blockExecuted: BigNumber.from(eventDetails.blockNumber)
-                        });
-                        setIsExecutable(await opsGovernorContract.getIsProposalExecutable(id));
-                    }
-                );
+                // // Subscribe to executions
+                // opsGovernorContract.on(
+                //     opsGovernorContract.filters.ProposalExecuted(id),
+                //     async (_eventArgs, eventDetails) => {
+                //         setProposal({
+                //             id,
+                //             ...(await opsGovernorContract.getProposal(id)),
+                //             startBlock: proposal.startBlock,
+                //             endBlock: proposal.endBlock,
+                //             blockExecuted: BigNumber.from(eventDetails.blockNumber)
+                //         });
+                //         setIsExecutable(await opsGovernorContract.getIsProposalExecutable(id));
+                //     }
+                // );
 
-                // Get the voting power if past start block
-                if (proposal.startBlock <= currentBlockResponse) {
-                    // Get num mangers
-                    const managers = await opsGovernorContract.getManagers();
-                    setTotalVotingPower(managers.length);
+                // // Get the voting power if past start block
+                // if (proposal.startBlock.lt(currentBlockResponse)) {
+                //     // Get num mangers
+                //     const managers = await opsGovernorContract.getManagers();
+                //     setTotalVotingPower(managers.length);
 
-                    // Check if executable
-                    setIsExecutable(await opsGovernorContract.getIsProposalExecutable(id));
-                }
+                //     // Check if executable
+                //     setIsExecutable(await opsGovernorContract.getIsProposalExecutable(id));
+                // }
             } catch (err) {
                 console.error(err);
             } finally {

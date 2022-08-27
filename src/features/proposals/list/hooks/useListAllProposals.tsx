@@ -11,7 +11,6 @@ import { useWeb3Context } from '@contexts/web3';
 // Code
 import addresses from '@constants/addresses';
 import contracts from '@constants/contracts';
-import { getStartBlock, getBlockExecuted } from '../../utils';
 
 type UseListAllProposalsReturn = {
     allProposals: Proposal[];
@@ -54,12 +53,7 @@ const useListAllProposals = (): UseListAllProposalsReturn => {
         const batchedProposalsResponse = await Promise.all(
             idsToFetch.map(async (id) => {
                 const batchedProposalResponse = await opsGovernorContract.getProposal(id);
-                const [startBlock, blockExecuted] = await Promise.all([
-                    getStartBlock(opsGovernorContract, id),
-                    getBlockExecuted(opsGovernorContract, id)
-                ]);
-                const endBlock = batchedProposalResponse.deadline.toNumber();
-                return { id, ...batchedProposalResponse, startBlock, endBlock, blockExecuted };
+                return { id, ...batchedProposalResponse };
             })
         );
         setAllProposals(batchedProposalsResponse);

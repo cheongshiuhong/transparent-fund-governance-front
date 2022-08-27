@@ -53,13 +53,15 @@ const RetrieveProposal: FC = (): ReactElement => {
     return (
         <div className="w-full max-w-[980px] mx-auto space-y-3">
             {/* Execution */}
-            {isExecutable && <Execution execute={execute} />}
+            {/* {isExecutable && <Execution execute={execute} />} */}
+            <Execution execute={execute} />
             {/* Voting */}
-            {!hasUserVoted &&
-                currentBlock >= proposal.startBlock &&
-                currentBlock <= proposal.endBlock && (
+            {/* {!hasUserVoted &&
+                proposal.startBlock.lte(currentBlock) &&
+                proposal.endBlock.gte(currentBlock) && (
                     <Voting castVote={castVote} totalVotingPower={totalVotingPower} />
-                )}
+                )} */}
+            <Voting castVote={castVote} totalVotingPower={totalVotingPower} />
             {/* Basic details */}
             <div className="w-full px-3 py-2 overflow-x-auto bg-white shadow-md">
                 <p className="text-xs sm:text-sm md:text-base">
@@ -74,8 +76,8 @@ const RetrieveProposal: FC = (): ReactElement => {
                 </p>
                 <p className="text-xs sm:text-sm md:text-base">
                     <span className="font-semibold">Block Duration</span>:&nbsp;
-                    {proposal.startBlock}
-                    &nbsp;-&nbsp;{proposal.endBlock}
+                    {proposal.startBlock.toString()}
+                    &nbsp;-&nbsp;{proposal.endBlock.toString()}
                     &nbsp;(Current: {currentBlock})
                 </p>
                 <p className="text-xs sm:text-sm md:text-base">

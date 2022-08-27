@@ -60,7 +60,7 @@ const CreateProposal: FC = (): ReactElement => {
             await contracts.opsGovernor
                 .attach(opsGovernorAddress)
                 .connect(provider.getSigner())
-                .functions.createProposal(description, blocksDuration, encodedCallData);
+                .createProposal(description, blocksDuration, encodedCallData);
 
             redirect(`/proposals`);
         } catch (err) {
